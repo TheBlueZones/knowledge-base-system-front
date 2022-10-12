@@ -21,7 +21,7 @@ export default {
   name: "theHeader",
   setup() {
     return {
-      selectedKeys1: ref<string[]>(['2']),
+      selectedKeys1: ref<string[]>(['1']),
     };
   },
 }
