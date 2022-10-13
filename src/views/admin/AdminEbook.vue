@@ -52,11 +52,39 @@
       </div>
     </a-layout-content>
   </a-layout>
+  <a-modal
+      title="电子书表单"
+      v-model:visible="modalVisible"
+      :confirm-loading="modalLoading"
+      @ok="handleModalOk"
+  >
+<!--表单-->
+    <a-form :model="ebook" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+      <a-form-item label="封面">
+        <a-input v-model:value="ebook.cover"/>
+      </a-form-item>
+      <a-form-item label="名称">
+        <a-input v-model:value="ebook.name"/>
+      </a-form-item>
+      <a-form-item label="分类">
+        <a-cascader
+            v-model:value="categoryIds"
+            :field-names="{ label: 'name', value: 'id', children: 'children' }"
+            :options="level1"
+        />
+      </a-form-item>
+      <a-form-item label="描述">
+        <a-input v-model:value="ebook.description" type="textarea"/>
+      </a-form-item>
+    </a-form>
+  </a-modal>
 </template>
 
 <script lang="ts">
 import {defineComponent, onMounted, ref} from "vue";
 import axios from "axios";
+import _default from "ant-design-vue/lib/vc-slick/inner-slider";
+import data = _default.data;
 
 export default defineComponent({
   name: "AdminEbook",
@@ -64,7 +92,7 @@ export default defineComponent({
     const ebooks = ref();
     const pagination = ref({
       current: 1,
-      pageSize: 2,
+      pageSize: 4,
       total: 0
     });
     const loading = ref(false);
@@ -107,13 +135,22 @@ export default defineComponent({
     const handleQuery = (params: any) => {
       loading.value = true;
 
-      axios.get("/ebook/list", params).then((response) => {
+      axios.get("/ebook/list", {
+        params: {
+          page: params.page,
+          size: params.size
+          /*这样就只会用到这两个参数*/
+        }
+      }).then((response) => {
         loading.value = false;
         const data = response.data;
-        ebooks.value = data.content;
+        ebooks.value = data.content.list;
+
+        //重置分页按钮
+        pagination.value.current = params.page;
+        pagination.value.total = data.content.list;
       });
-      //重置分页按钮
-      pagination.value.current = params.page;
+
     };
 
     /**
@@ -126,19 +163,53 @@ export default defineComponent({
         size: pagination.pageSize
       });
     };
-    onMounted(()=>{
-      handleQuery({});
+
+
+    // -------- 表单 ---------
+    /**
+     * 数组，[100, 101]对应：前端开发 / Vue
+     */
+    const categoryIds = ref();
+    const ebook = ref();
+    const modalVisible = ref(false);
+    const modalLoading = ref(false);
+    const handleModalOk = () => {
+      modalLoading.value = true;
+      setTimeout(() => {
+        modalVisible.value = false;
+        modalLoading.value = false;
+      }, 2000)
+    };
+
+    /*
+    * 编辑
+    * */
+    const edit = (record: any) => {
+      modalVisible.value = true;
+      ebook.value = record
+    }
+
+    onMounted(() => {
+      handleQuery({
+        page: 1,
+        size: pagination.value.pageSize
+      });
     });
 
-    return{
+    return {
       ebooks,
       pagination,
       columns,
       loading,
-      handleTableChange
+      handleTableChange,
+      edit,
+      modalVisible,
+      modalLoading,
+      handleModalOk,
+      ebook
     }
-  }
-})
+    }
+  });
 </script>
 
 <style scoped>
