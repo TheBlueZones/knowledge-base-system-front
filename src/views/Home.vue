@@ -57,7 +57,7 @@
                   </div>
                 </template>-->
         <template #renderItem="{ item }">
-          <a-list-item key="item.title">
+          <a-list-item key="item.name">
             <template #actions>
           <span v-for="{ type, text } in actions" :key="type">
             <component :is="type" style="margin-right: 8px"/>
@@ -82,11 +82,8 @@
 <script lang="ts">
 import {UserOutlined, LaptopOutlined, NotificationOutlined} from '@ant-design/icons-vue';
 import {StarOutlined, LikeOutlined, MessageOutlined} from '@ant-design/icons-vue';
-import {defineComponent, onMounted, reactive, ref} from 'vue';
+import {defineComponent, onMounted,  ref} from 'vue';
 import axios from "axios";
-
-const listData: Record<string, string>[] = [];
-
 
 export default defineComponent({
   name: "Home",
@@ -99,16 +96,16 @@ export default defineComponent({
     MessageOutlined,
   },
   setup() {
-const ebooks =ref();
-const ebooks1 = reactive({books:[]});
+    const ebooks = ref();
+// const ebooks1 = reactive({books:[]});
 
-onMounted(()=> {
-  axios.get("/ebook/list").then((response)=> {
-    const data =response.data;
-    ebooks.value=data.content;
-    ebooks1.books=data.content;
-  })
-})
+    onMounted(() => {
+      axios.get("/ebook/list").then((response) => {
+        const data = response.data;
+        ebooks.value = data.content.list;
+        // ebooks1.books=data.content;
+      })
+    })
     const actions: Record<string, string>[] = [
       {type: 'StarOutlined', text: '156'},
       {type: 'LikeOutlined', text: '156'},
@@ -116,6 +113,7 @@ onMounted(()=> {
     ];
     return {
       actions,
+      ebooks
     };
   },
 });
