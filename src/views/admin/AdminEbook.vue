@@ -4,6 +4,9 @@
     <a-layout-content
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
+      <a-button type="primary" @click="add" size="large">
+        新增
+      </a-button>
       <!--每一行要给一个key-->
       <a-table
           :columns="columns"
@@ -189,6 +192,13 @@ export default defineComponent({
       modalVisible.value = true;
       ebook.value = record
     }
+    /**
+     * 新增
+     * */
+    const add = () => {
+      modalVisible.value = true;
+      ebook.value = {};
+    }
 
     onMounted(() => {
       handleQuery({
@@ -207,7 +217,8 @@ export default defineComponent({
       modalVisible,
       modalLoading,
       handleModalOk,
-      ebook
+      ebook,
+      add
     }
   }
 });
