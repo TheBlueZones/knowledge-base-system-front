@@ -4,9 +4,24 @@
     <a-layout-content
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
-      <a-button type="primary" @click="add" size="large">
-        新增
-      </a-button>
+      <p>
+        <a-form layout="inline" :model="param">
+          <a-form-item>
+            <a-input v-model:value="param.name" placeholder="名称">
+            </a-input>
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="handleQuery({page: 1, size: pagination.pageSize})"><!--在里面用就不需要。value了-->
+              查询
+            </a-button>
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="add()">
+              新增
+            </a-button>
+          </a-form-item>
+        </a-form>
+      </p>
       <!--每一行要给一个key-->
       <a-table
           :columns="columns"
@@ -25,7 +40,7 @@
         <!--          <span>{{ getCategoryName(record.category1Id) }} / {{ getCategoryName(record.category2Id) }}</span>-->
         <!--        </template>-->
 
-        <template v-slot:action="{ text, record }">
+        <template v-slot:action="{  record }">
           <a-space size="small">
             <a-button type="primary" @click="edit(record)">
               编辑
@@ -79,10 +94,13 @@
 import {defineComponent, onMounted, ref} from "vue";
 import axios from "axios";
 import {message} from "ant-design-vue";
+import { Tool } from "@/util/tool";
 
 export default defineComponent({
   name: "AdminEbook",
   setup() {
+    const param=ref();
+    param.value={};
     const ebooks = ref();
     const pagination = ref({
       current: 1,
@@ -137,7 +155,8 @@ export default defineComponent({
       axios.get("/ebook/list", {
         params: {
           page: params.page,
-          size: params.size
+          size: params.size,
+          name: param.value.name/*这里的两个parm是不一样的*/
           /*这样就只会用到这两个参数*/
         }
       }).then((response) => {
@@ -206,7 +225,7 @@ export default defineComponent({
      * */
     const edit = (record: any) => {
       modalVisible.value = true;
-      ebook.value = record
+      ebook.value = Tool.copy(record);/*数据双向绑定，所以在着了赋值一份*/
     }
     /**
      * 新增
@@ -224,12 +243,13 @@ export default defineComponent({
         const data = response.data; // data = commonResp
         if (data.success) {
           // 重新加载列表
+          message.success(data.message);
           handleQuery({
             page: pagination.value.current,
             size: pagination.value.pageSize,
           });
         } else {
-          // message.error(data.message);
+          message.error(data.message);
         }
       });
     };
@@ -243,6 +263,7 @@ export default defineComponent({
     });
 
     return {
+      param,
       ebooks,
       pagination,
       columns,
@@ -253,6 +274,8 @@ export default defineComponent({
       edit,
       handleDelete,
       add,
+
+      handleQuery,
 
       modalVisible,
       modalLoading,
