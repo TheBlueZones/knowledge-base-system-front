@@ -58,9 +58,6 @@
           </a-space>
         </template>
       </a-table>
-      <div class="about">
-        <h1>电子书管理</h1>
-      </div>
     </a-layout-content>
   </a-layout>
   <a-modal
