@@ -34,11 +34,9 @@
         <template #cover="{ text: cover }">
           <img v-if="cover" :src="cover" alt="avatar"/>
         </template>
-        <!--        <template v-slot:category="-->
-        <!--{/* eslint-disable-next-line vue/no-unused-vars */},-->
-        <!--{ text , record }">-->
-        <!--          <span>{{ getCategoryName(record.category1Id) }} / {{ getCategoryName(record.category2Id) }}</span>-->
-        <!--        </template>-->
+        <template v-slot:category=" { text , record }">
+          <span>{{ getCategoryName(record.category1Id) }} / {{ getCategoryName(record.category2Id) }}</span>
+        </template>
 
         <template v-slot:action="{  record }">
           <a-space size="small">
@@ -76,7 +74,7 @@
       </a-form-item>
       <a-form-item label="分类">
         <a-input v-model:value="ebook.categoryIds"/>
-<!--级联组件        -->
+        <!--级联组件        -->
         <a-cascader
             v-model:value="categoryIds"
             :field-names="{ label: 'name', value: 'id', children: 'children' }"
@@ -94,13 +92,13 @@
 import {defineComponent, onMounted, ref} from "vue";
 import axios from "axios";
 import {message} from "ant-design-vue";
-import { Tool } from "@/util/tool";
+import {Tool} from "@/util/tool";
 
 export default defineComponent({
   name: "AdminEbook",
   setup() {
-    const param=ref();
-    param.value={};
+    const param = ref();
+    param.value = {};
     const ebooks = ref();
     const pagination = ref({
       current: 1,
@@ -120,13 +118,9 @@ export default defineComponent({
         dataIndex: 'name'
       },
       {
-        title: '分类一',
+        title: '分类',
         key: 'category1Id',
-        dataIndex: 'category1Id'
-      }, {
-        title: '分类二',
-        dataIndex: 'category2Id',
-        slots: {customRender: 'name'}
+       slots: {customRender: 'category'}/*会自动带上那两个参数*/
       },
       {
         title: '文档数',
@@ -168,7 +162,7 @@ export default defineComponent({
           //重置分页按钮
           pagination.value.current = params.page;
           pagination.value.total = data.content.total;
-        }else {
+        } else {
           message.error(data.message);
         }
 
@@ -204,7 +198,7 @@ export default defineComponent({
       ebook.value.category1Id = categoryIds.value[0];
       ebook.value.category2Id = categoryIds.value[1];
       axios.post("/ebook/save", ebook.value).then((response) => {
-        modalLoading.value=false;
+        modalLoading.value = false;
         const data = response.data;
         if (data.success) {
           /*这个是modalVisible哪个框*/
@@ -216,7 +210,7 @@ export default defineComponent({
             page: pagination.value.current,
             size: pagination.value.pageSize
           });
-        }else {
+        } else {
           message.error(data.message);
         }
       });
@@ -257,8 +251,8 @@ export default defineComponent({
       });
     };
 
-    const level1 =  ref();
-    let categorys: any;
+    const level1 = ref();/*响应式变量*/
+    let categorys: any;/*普通变量，只是在js里面用*/
     /**
      * 查询所有分类
      **/
@@ -286,6 +280,17 @@ export default defineComponent({
       });
     };
 
+    const getCategoryName = (cid: number) => {
+      // console.log(cid)
+      let result = "";
+      categorys.forEach((item: any) => {
+        if (item.id === cid) {
+          // return item.name; // 注意，这里直接return不起作用
+          result = item.name;
+        }
+      });
+      return result;
+    };
 
     onMounted(() => {
       handleQueryCategory();
@@ -303,6 +308,7 @@ export default defineComponent({
       loading,
       handleTableChange,
 
+      getCategoryName,
       /*方法*/
       edit,
       handleDelete,

@@ -29,12 +29,9 @@
         <template #cover="{ text: cover }">
           <img v-if="cover" :src="cover" alt="avatar"/>
         </template>
-        <!--        <template v-slot:category="-->
-        <!--{/* eslint-disable-next-line vue/no-unused-vars */},-->
-        <!--{ text , record }">-->
-        <!--          <span>{{ getCategoryName(record.category1Id) }} / {{ getCategoryName(record.category2Id) }}</span>-->
-        <!--        </template>-->
-
+<!--        <template v-slot:category="{ text, record }">
+          <span>{{ getCategoryName(record.category1Id) }} / {{ getCategoryName(record.category2Id) }}</span>
+        </template>-->
         <template v-slot:action="{  record }">
           <a-space size="small">
             <a-button type="primary" @click="edit(record)">
@@ -67,7 +64,7 @@
       <a-form-item label="名称">
         <a-input v-model:value="category.name"/>
       </a-form-item>
-      <a-form-item label="父分类">
+      <a-form-item label="分类">
         <a-input v-model:value="category.parent"/>
           <a-select
               ref="select"
