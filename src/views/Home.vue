@@ -8,26 +8,31 @@
           :openKeys="openKeys"
       >
         <a-menu-item key="welcome">
-          <MailOutlined />
+          <MailOutlined/>
           <span>欢迎</span>
         </a-menu-item>
-        <a-sub-menu v-for="item in level1" :key="item.id" :disabled="true">
+        <a-sub-menu v-for="item in level1" :key="item.id" :disabled="false">
           <template v-slot:title>
-            <span><user-outlined />{{item.name}}</span>
+            <span><user-outlined/>{{ item.name }}</span>
           </template>
           <a-menu-item v-for="child in item.children" :key="child.id">
-            <MailOutlined /><span>{{child.name}}</span>
+            <MailOutlined/>
+            <span>{{ child.name }}</span>
           </a-menu-item>
         </a-sub-menu>
-<!--        <a-menu-item key="tip" :disabled="true">
-          <span>以上菜单在分类管理配置</span>
-        </a-menu-item>-->
+        <!--        <a-menu-item key="tip" :disabled="true">
+                  <span>以上菜单在分类管理配置</span>
+                </a-menu-item>-->
       </a-menu>
     </a-layout-sider>
     <a-layout-content
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
-      <a-list item-layout="vertical" size="large" :grid="{ gutter: 16, column: 4 }" :data-source="ebooks">
+      <div class="welcome" v-show="isShowWelcome">
+        <h1>欢迎来到yide的电子书库</h1>
+      </div>
+      <a-list v-show="!isShowWelcome" item-layout="vertical" size="large" :grid="{ gutter: 16, column: 4 }"
+              :data-source="ebooks">
         <!--组件的页脚-->
         <!--        <template #footer>
                   <div>
@@ -59,11 +64,18 @@
 </template>
 
 <script lang="ts">
-import {UserOutlined, LaptopOutlined, NotificationOutlined,StarOutlined, LikeOutlined, MessageOutlined} from '@ant-design/icons-vue';
-import {defineComponent, onMounted,  ref} from 'vue';
+import {
+  UserOutlined,
+  LaptopOutlined,
+  NotificationOutlined,
+  StarOutlined,
+  LikeOutlined,
+  MessageOutlined
+} from '@ant-design/icons-vue';
+import {defineComponent, onMounted, ref} from 'vue';
 import axios from "axios";
 import {Tool} from "@/util/tool";
-import { message } from 'ant-design-vue';
+import {message} from 'ant-design-vue';
 
 export default defineComponent({
   name: "Home",
@@ -77,8 +89,8 @@ export default defineComponent({
   },
   setup() {
     const ebooks = ref();
-
-    const level1 =  ref();
+    const isShowWelcome = ref(true);
+    const level1 = ref();
     let categorys: any;
 // const ebooks1 = reactive({books:[]});
     const handleQueryCategory = () => {
@@ -88,37 +100,65 @@ export default defineComponent({
           categorys = data.content;
           console.log("原始数组：", categorys);
 
-    /*      // 加载完分类后，将侧边栏全部展开
-          openKeys.value = [];
-          for (let i = 0; i < categorys.length; i++) {
-            openKeys.value.push(categorys[i].id)
-          }*/
+          /*      // 加载完分类后，将侧边栏全部展开
+                openKeys.value = [];
+                for (let i = 0; i < categorys.length; i++) {
+                  openKeys.value.push(categorys[i].id)
+                }*/
 
           level1.value = [];
           level1.value = Tool.array2Tree(categorys, 0);
           console.log("树形结构：", level1.value);
+
+          // handleQuery({
+          //   page: 1,
+          //   size: pagination.value.pageSize,
+          // })
         } else {
           message.error(data.message);
         }
       });
     };
-    onMounted(() => {
-      handleQueryCategory();
-      axios.get("/ebook/list").then((response) => {
+
+    let categoryId2 = 0;
+    const handleClick = (value: any) => {
+      // console.log("menu click", value)
+      if (value.key === 'welcome') {
+        isShowWelcome.value = true;
+      } else {
+        categoryId2 = value.key;
+        isShowWelcome.value = false;
+        handleQueryEbook();
+      }
+    }
+
+    const handleQueryEbook = () => {
+      axios.get("/ebook/list", {
+        params: {
+          page: 1,
+          size: 1000,
+          categoryId2: categoryId2
+        }
+      }).then((response) => {
         const data = response.data;
         ebooks.value = data.content.list;
-        // ebooks1.books=data.content;
-      })
+        // ebooks1.books = data.content;
+      });
+    };
+    onMounted(() => {
+      handleQueryCategory();
+      // handleQueryEbook();
     })
     return {
-      actions:[
+      actions: [
         {type: 'StarOutlined', text: '156'},
         {type: 'LikeOutlined', text: '156'},
         {type: 'MessageOutlined', text: '2'},
       ],
       ebooks,
       level1,
-
+      isShowWelcome,
+      handleClick
     };
   },
 });
