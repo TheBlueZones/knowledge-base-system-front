@@ -132,6 +132,8 @@ export default defineComponent({
      **/
     const handleQuery = () => {
       loading.value = true;
+      // 如果不清空现有数据，则编辑保存重新加载数据后，再点编辑，则列表显示的还是编辑前的数据
+      level1.value = [];
       /*这是get的方式*/
       axios.get("/category/all").then((response) => {
         loading.value = false;
