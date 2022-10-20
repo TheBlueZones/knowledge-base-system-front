@@ -4,97 +4,108 @@
     <a-layout-content
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
-      <p>
-        <a-form layout="inline" :model="param">
-          <a-form-item>
-            <a-button type="primary" @click="handleQuery()"><!--在里面用就不需要。value了-->
-              查询
-            </a-button>
-          </a-form-item>
-          <a-form-item>
-            <a-button type="primary" @click="add()">
-              新增
-            </a-button>
-          </a-form-item>
-        </a-form>
-      </p>
+      <a-row>
+        <a-col :span="8">
+          <p>
+            <a-form layout="inline" :model="param">
+              <a-form-item>
+                <a-button type="primary" @click="handleQuery()"><!--在里面用就不需要。value了-->
+                  查询
+                </a-button>
+              </a-form-item>
+              <a-form-item>
+                <a-button type="primary" @click="add()">
+                  新增
+                </a-button>
+              </a-form-item>
+            </a-form>
+          </p>
+          <a-table
+              :columns="columns"
+              :row-key="record => record.id"
+              :data-source="level1"
+              :loading="loading"
+              :pagination="false"
+          >
+            <template #cover="{ text: cover }">
+              <img v-if="cover" :src="cover" alt="avatar"/>
+            </template>
+            <!--        <template v-slot:doc="{ text, record }">
+                      <span>{{ getDocName(record.doc1Id) }} / {{ getDocName(record.doc2Id) }}</span>
+                    </template>-->
+            <template v-slot:action="{  text,record }">
+              <a-space size="small">
+                <a-button type="primary" @click="edit(record)">
+                  编辑
+                </a-button>
+                <a-popconfirm
+                    title="删除后不可恢复，确认删除?"
+                    ok-text="是"
+                    cancel-text="否"
+                    @confirm="showConfirm(record.id)"
+                >
+                  <a-button type="danger">
+                    删除
+                  </a-button>
+                </a-popconfirm>
+              </a-space>
+            </template>
+          </a-table>
+        </a-col>
+        <a-col :span="16">
+          <a-form :model="doc" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+            <a-form-item label="名称">
+              <a-input v-model:value="doc.name"/>
+            </a-form-item>
+            <a-form-item label="名称">
+              <a-tree-select
+                  v-model:value="doc.parent"
+                  show-search
+                  style="width: 100%"
+                  :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+                  placeholder="请选择父文档"
+                  allow-clear
+                  tree-default-expand-all
+                  :tree-data="treeSelectData"
+                  :field-names="{label: 'name',value: 'id', children: 'children'}"
+              >
+                <!--把组件的变量转换成自己的-->
+              </a-tree-select>
+            </a-form-item>
+            <a-form-item label="父文档">
+              <a-input v-model:value="doc.parent"/>
+              <a-select
+                  ref="select"
+                  v-model:value="doc.parent"
+              >
+                <a-select-option value="0">无</a-select-option>
+                <a-select-option v-for="c in level1" :key="c.id" :value="c.id" :disabled="doc.id==c.id">{{ c.name }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="顺序">
+              <a-input v-model:value="doc.sort"/>
+            </a-form-item>
+            <a-form-item label="内容">
+              <div id="content"></div>
+            </a-form-item>
+          </a-form>
+        </a-col>
+      </a-row>
+
       <!--每一行要给一个key-->
-      <a-table
-          :columns="columns"
-          :row-key="record => record.id"
-          :data-source="level1"
-          :loading="loading"
-          :pagination="false"
-      >
-        <template #cover="{ text: cover }">
-          <img v-if="cover" :src="cover" alt="avatar"/>
-        </template>
-        <!--        <template v-slot:doc="{ text, record }">
-                  <span>{{ getDocName(record.doc1Id) }} / {{ getDocName(record.doc2Id) }}</span>
-                </template>-->
-        <template v-slot:action="{  text,record }">
-          <a-space size="small">
-            <a-button type="primary" @click="edit(record)">
-              编辑
-            </a-button>
-            <a-popconfirm
-                title="删除后不可恢复，确认删除?"
-                ok-text="是"
-                cancel-text="否"
-                @confirm="showConfirm(record.id)"
-            >
-              <a-button type="danger"  >
-                删除
-              </a-button>
-            </a-popconfirm>
-          </a-space>
-        </template>
-      </a-table>
+
 
     </a-layout-content>
   </a-layout>
-  <a-modal
+<!--  <a-modal
       title="文档表单"
       v-model:visible="modalVisible"
       :confirm-loading="modalLoading"
       @ok="handleModalOk"
   >
-    <!--表单-->
-    <a-form :model="doc" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-      <a-form-item label="名称">
-        <a-input v-model:value="doc.name"/>
-      </a-form-item>
-      <a-form-item label="名称">
-        <a-tree-select
-            v-model:value="doc.parent"
-            show-search
-            style="width: 100%"
-            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-            placeholder="请选择父文档"
-            allow-clear
-            tree-default-expand-all
-            :tree-data="treeSelectData"
-            :field-names="{label: 'name',value: 'id', children: 'children'}"
-        >
-          <!--把组件的变量转换成自己的-->
-        </a-tree-select>
-      </a-form-item>
-      <a-form-item label="父文档">
-        <a-input v-model:value="doc.parent"/>
-        <a-select
-            ref="select"
-            v-model:value="doc.parent"
-        >
-          <a-select-option value="0">无</a-select-option>
-          <a-select-option v-for="c in level1" :key="c.id" :value="c.id" :disabled="doc.id==c.id">{{ c.name }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
-      <a-form-item label="顺序">
-        <a-input v-model:value="doc.sort"/>
-      </a-form-item>
-    </a-form>
-  </a-modal>
+    &lt;!&ndash;表单&ndash;&gt;
+  </a-modal>-->
 </template>
 
 <script lang="ts">
@@ -108,7 +119,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 export default defineComponent({
   name: "AdminDoc",
   setup() {
-    const route =useRoute();
+    const route = useRoute();
     console.log("路由：", route);
     console.log("route.path：", route.path);
     console.log("route.query：", route.query);
@@ -172,7 +183,7 @@ export default defineComponent({
           level1.value = [];
           level1.value = Tool.array2Tree(docs.value, 0);
           // console.log('level1.value----------' + JSON.stringify(level1.value));
-          console.log('level1.value----------' ,level1.value);
+          console.log('level1.value----------', level1.value);
           // console.log('data.content--------'+data.content);
           console.log("树形结构：", level1);/*不能用逗号*/
         } else {
@@ -194,6 +205,7 @@ export default defineComponent({
     const doc = ref({});
     const modalVisible = ref(false);
     const modalLoading = ref(false);
+
     const handleModalOk = () => {
       modalLoading.value = true;/*显示一个loading的效果*/
       /*     setTimeout(() => {
@@ -267,7 +279,7 @@ export default defineComponent({
     const add = () => {
       modalVisible.value = true;
       doc.value = {
-        ebookId:route.query.ebookId/*这里只要写成一样的，完了就可以自动识别出来*/
+        ebookId: route.query.ebookId/*这里只要写成一样的，完了就可以自动识别出来*/
       };
 
       treeSelectData.value = Tool.copy(level1.value);
@@ -327,7 +339,9 @@ export default defineComponent({
     };
 
     const showConfirm = (id: number) => {
-      getDeleteIds(level1.value,id);
+      deleteIds.length = 0;
+      deleteNames.length = 0;/*删除后清空数组，不然会有叠加*/
+      getDeleteIds(level1.value, id);
       Modal.confirm({
         title: '你确定要删除以下文档吗？',
         icon: createVNode(ExclamationCircleOutlined),
