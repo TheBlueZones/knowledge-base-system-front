@@ -20,13 +20,16 @@
               </a-form-item>
             </a-form>
           </p>
+          <!--   v-if="level1.length>0",等有数据了再去展开表，:default-expand-all-rows="true"不然无法生效         -->
           <a-table
+              v-if="level1.length>0"
               :columns="columns"
               :data-source="level1"
               :loading="loading"
               :pagination="false"
               :row-key="record => record.id"
               size="small"
+              :default-expand-all-rows="true"
           >
             <template #name="{ text, record }">
               {{ record.sort }}{{ text }}
@@ -93,7 +96,7 @@
                 </a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item >
+            <a-form-item>
               <a-input v-model:value="doc.sort" placeholder="顺序"/>
             </a-form-item>
             <a-form-item>
@@ -216,7 +219,7 @@ export default defineComponent({
      * }]
      */
     const level1 = ref(); // 一级文档树，children属性就是二级文档
-
+    level1.value = [];/*赋值一个空数组方便去判断展开*/
 
     /**
      * 数据查询
