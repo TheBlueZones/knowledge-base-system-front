@@ -73,19 +73,17 @@
             <a-form-item>
               <a-tree-select
                   v-model:value="doc.parent"
-                  show-search
                   style="width: 100%"
                   :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
                   placeholder="请选择父文档"
                   allow-clear
                   tree-default-expand-all
                   :tree-data="treeSelectData"
-                  :field-names="{label: 'name',value: 'id', children: 'children'}"
-              >
-                <!--把组件的变量转换成自己的-->
+                  :field-names="{label: 'name',value: 'id', children: 'children' }"
+              >  <!--把组件的变量转换成自己的-->
               </a-tree-select>
             </a-form-item>
-            <a-form-item>
+<!--            <a-form-item>
               <a-input v-model:value="doc.parent" placeholder="父文档"/>
               <a-select
                   ref="select"
@@ -95,7 +93,7 @@
                 <a-select-option v-for="c in level1" :key="c.id" :value="c.id" :disabled="doc.id==c.id">{{ c.name }}
                 </a-select-option>
               </a-select>
-            </a-form-item>
+            </a-form-item>-->
             <a-form-item>
               <a-input v-model:value="doc.sort" placeholder="顺序"/>
             </a-form-item>
@@ -150,7 +148,7 @@ import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 export default defineComponent({
   name: "AdminDoc",
   components: {Editor, Toolbar},
-  setup() {
+  setup: function () {
     /**
      * 富文本
      * */
@@ -158,7 +156,7 @@ export default defineComponent({
     const editorRef = shallowRef()
 
     // 内容 HTML
-    const valueHtml = ref('<p>hello</p>')
+    const valueHtml = ref('<p></p>')
 
     // 模拟 ajax 异步获取内容
     onMounted(() => {
@@ -243,6 +241,30 @@ export default defineComponent({
           console.log('level1.value----------', level1.value);
           // console.log('data.content--------'+data.content);
           console.log("树形结构：", level1);/*不能用逗号*/
+
+          // 父文档下拉框初始化，相当于点击新增
+          treeSelectData.value = Tool.copy(level1.value) || [];
+          // 为选择树添加一个"无"
+          treeSelectData.value.unshift({id: 0, name: '无'});
+        } else {
+          message.error(data.message);
+        }
+      });
+
+    };
+
+
+    /**
+     * 内容查询
+     **/
+    const handleQueryContent = () => {
+
+      axios.get("/doc/findContent/"+doc.value.id).then((response) => {
+        loading.value = false;
+        const data = response.data;
+        // console.log('response: ' + JSON.stringify(response))
+        if (data.success) {
+          valueHtml.value =data.content;
         } else {
           message.error(data.message);
         }
@@ -259,7 +281,8 @@ export default defineComponent({
     const treeSelectData = ref();
     treeSelectData.value = [];
 
-    const doc = ref({});
+    const doc = ref();
+    doc.value = {};/*初始赋值一个空对象*/
     const modalVisible = ref(false);
     const modalLoading = ref(false);
 
@@ -268,6 +291,7 @@ export default defineComponent({
       /*     setTimeout(() => {
 
            }, 2000);*/
+      doc.value.content = valueHtml.value;
 
       axios.post("/doc/save", doc.value).then((response) => {
         modalLoading.value = false;
@@ -319,8 +343,10 @@ export default defineComponent({
      * 编辑
      * */
     const edit = (record: any) => {
+
       modalVisible.value = true;
       doc.value = Tool.copy(record);/*数据双向绑定，所以在这复制了一份*/
+      handleQueryContent();
       console.log(record, doc.value);
 
       // 不能选择当前节点及其所有子孙节点，作为父节点，会使树断开
