@@ -32,7 +32,7 @@
         <!--        <template v-slot:doc="{ text, record }">
                   <span>{{ getDocName(record.doc1Id) }} / {{ getDocName(record.doc2Id) }}</span>
                 </template>-->
-        <template v-slot:action="{  record }">
+        <template v-slot:action="{  text,record }">
           <a-space size="small">
             <a-button type="primary" @click="edit(record)">
               编辑
@@ -41,9 +41,9 @@
                 title="删除后不可恢复，确认删除?"
                 ok-text="是"
                 cancel-text="否"
-                @confirm="handleDelete(record.id)"
+                @confirm="showConfirm(record.id)"
             >
-              <a-button type="danger">
+              <a-button type="danger"  >
                 删除
               </a-button>
             </a-popconfirm>
@@ -98,11 +98,12 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, ref} from "vue";
+import {createVNode, defineComponent, onMounted, ref} from "vue";
 import axios from "axios";
-import {message} from "ant-design-vue";
+import {message, Modal} from "ant-design-vue";
 import {Tool} from "@/util/tool";
 import {useRoute} from "vue-router";
+import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 
 export default defineComponent({
   name: "AdminDoc",
@@ -275,7 +276,8 @@ export default defineComponent({
       treeSelectData.value.unshift({id: 0, name: '无'});
     }
 
-    const ids: Array<string> = [];
+    const deleteIds: Array<string> = [];
+    const deleteNames: Array<string> = [];
 
     const getDeleteIds = (treeSelectData: any, id: any) => {
       // console.log(treeSelectData, id);
@@ -285,11 +287,10 @@ export default defineComponent({
         if (node.id === id) {
           // 如果当前节点就是目标节点
           console.log("delete", node);
-          // 将目标ID放入结果集ids
+          // 将目标ID放入结果集deleteIds
           // node.disabled = true;
-          ids.push(id);
-      /*    deleteIds.push(id);
-          deleteNames.push(node.name);*/
+          deleteIds.push(id);
+          deleteNames.push(node.name);
 
           // 遍历所有子节点
           const children = node.children;
@@ -312,9 +313,8 @@ export default defineComponent({
      * 删除
      * */
     const handleDelete = (id: number) => {
-      getDeleteIds(level1.value,id);
       /*这里直接拼接字符串*/
-      axios.delete("/doc/delete/" + ids.join(",")).then((response) => {
+      axios.delete("/doc/delete/" + deleteIds.join(",")).then((response) => {
         const data = response.data; // data = commonResp
         if (data.success) {
           // 重新加载列表
@@ -326,7 +326,17 @@ export default defineComponent({
       });
     };
 
-
+    const showConfirm = (id: number) => {
+      getDeleteIds(level1.value,id);
+      Modal.confirm({
+        title: '你确定要删除以下文档吗？',
+        icon: createVNode(ExclamationCircleOutlined),
+        content: '将删除：【' + deleteNames.join("，") + "】删除后不可恢复，确认删除？",
+        onOk() {
+          handleDelete(id);
+        },
+      });
+    }
     onMounted(() => {
       handleQuery();
     });
@@ -343,7 +353,7 @@ export default defineComponent({
       add,
       treeSelectData,
       handleQuery,
-
+      showConfirm,
       modalVisible,
       modalLoading,
       handleModalOk,
