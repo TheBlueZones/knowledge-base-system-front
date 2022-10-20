@@ -4,7 +4,7 @@
     <a-layout-content
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
-      <a-row>
+      <a-row :gutter="24">
         <a-col :span="8">
           <p>
             <a-form layout="inline" :model="param">
@@ -22,20 +22,21 @@
           </p>
           <a-table
               :columns="columns"
-              :row-key="record => record.id"
               :data-source="level1"
               :loading="loading"
               :pagination="false"
+              :row-key="record => record.id"
+              size="small"
           >
-            <template #cover="{ text: cover }">
-              <img v-if="cover" :src="cover" alt="avatar"/>
+            <template #name="{ text, record }">
+              {{ record.sort }}{{ text }}
             </template>
             <!--        <template v-slot:doc="{ text, record }">
                       <span>{{ getDocName(record.doc1Id) }} / {{ getDocName(record.doc2Id) }}</span>
                     </template>-->
             <template v-slot:action="{  text,record }">
               <a-space size="small">
-                <a-button type="primary" @click="edit(record)">
+                <a-button type="primary" @click="edit(record)" size="small">
                   编辑
                 </a-button>
                 <a-popconfirm
@@ -44,7 +45,7 @@
                     cancel-text="否"
                     @confirm="showConfirm(record.id)"
                 >
-                  <a-button type="danger">
+                  <a-button type="danger" size="small">
                     删除
                   </a-button>
                 </a-popconfirm>
@@ -53,11 +54,20 @@
           </a-table>
         </a-col>
         <a-col :span="16">
-          <a-form :model="doc" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-            <a-form-item label="名称">
-              <a-input v-model:value="doc.name"/>
+          <p>
+            <a-form layout="inline" :model="param">
+              <a-form-item>
+                <a-button type="primary" @click="handleSave()">
+                  保存
+                </a-button>
+              </a-form-item>
+            </a-form>
+          </p>
+          <a-form :model="doc" layout="vertical">
+            <a-form-item>
+              <a-input v-model:value="doc.name" placeholder="名称"/>
             </a-form-item>
-            <a-form-item label="名称">
+            <a-form-item>
               <a-tree-select
                   v-model:value="doc.parent"
                   show-search
@@ -72,8 +82,8 @@
                 <!--把组件的变量转换成自己的-->
               </a-tree-select>
             </a-form-item>
-            <a-form-item label="父文档">
-              <a-input v-model:value="doc.parent"/>
+            <a-form-item>
+              <a-input v-model:value="doc.parent" placeholder="父文档"/>
               <a-select
                   ref="select"
                   v-model:value="doc.parent"
@@ -83,11 +93,25 @@
                 </a-select-option>
               </a-select>
             </a-form-item>
-            <a-form-item label="顺序">
-              <a-input v-model:value="doc.sort"/>
+            <a-form-item >
+              <a-input v-model:value="doc.sort" placeholder="顺序"/>
             </a-form-item>
-            <a-form-item label="内容">
-              <div id="content"></div>
+            <a-form-item>
+              <div style="border: 1px solid #ccc" id="webebnkuang">
+                <Toolbar
+                    style="border-bottom: 1px solid #ccc"
+                    :editor="editorRef"
+                    :defaultConfig="toolbarConfig"
+                    :mode="mode"
+                />
+                <Editor
+                    style="height: 500px; overflow-y: hidden;"
+                    v-model="valueHtml"
+                    :defaultConfig="editorConfig"
+                    :mode="mode"
+                    @onCreated="handleCreated"
+                />
+              </div>
             </a-form-item>
           </a-form>
         </a-col>
@@ -98,14 +122,14 @@
 
     </a-layout-content>
   </a-layout>
-<!--  <a-modal
-      title="文档表单"
-      v-model:visible="modalVisible"
-      :confirm-loading="modalLoading"
-      @ok="handleModalOk"
-  >
-    &lt;!&ndash;表单&ndash;&gt;
-  </a-modal>-->
+  <!--  <a-modal
+        title="文档表单"
+        v-model:visible="modalVisible"
+        :confirm-loading="modalLoading"
+        @ok="handleModalOk"
+    >
+      &lt;!&ndash;表单&ndash;&gt;
+    </a-modal>-->
 </template>
 
 <script lang="ts">
@@ -115,10 +139,45 @@ import {message, Modal} from "ant-design-vue";
 import {Tool} from "@/util/tool";
 import {useRoute} from "vue-router";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
+import '@wangeditor/editor/dist/css/style.css' // 引入 css
+
+import {onBeforeUnmount, shallowRef} from 'vue'
+import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 
 export default defineComponent({
   name: "AdminDoc",
+  components: {Editor, Toolbar},
   setup() {
+    /**
+     * 富文本
+     * */
+        // 编辑器实例，必须用 shallowRef
+    const editorRef = shallowRef()
+
+    // 内容 HTML
+    const valueHtml = ref('<p>hello</p>')
+
+    // 模拟 ajax 异步获取内容
+    onMounted(() => {
+      setTimeout(() => {
+        valueHtml.value = '<p></p>'
+      }, 1500)
+    })
+
+    const toolbarConfig = {}
+    const editorConfig = {placeholder: '请输入内容...'}
+
+    // 组件销毁时，也及时销毁编辑器
+    onBeforeUnmount(() => {
+      const editor = editorRef.value
+      if (editor == null) return
+      editor.destroy()
+    })
+
+    const handleCreated = (editor: any) => {
+      editorRef.value = editor // 记录 editor 实例，重要！
+    }
+
     const route = useRoute();
     console.log("路由：", route);
     console.log("route.path：", route.path);
@@ -134,20 +193,15 @@ export default defineComponent({
     const columns = [
       {
         title: '名称',
-        dataIndex: 'name'
-      },
-      {
-        title: '父文档',
-        key: 'parent',
-        dataIndex: 'parent'
-      }, {
-        title: '顺序',
-        dataIndex: 'sort',
+        dataIndex: 'name',
+        slots: {customRender: 'name'}
+        /*有dataIndex:，这个列对应的是name*/
       },
       {
         title: 'Action',
         key: 'action',
         slots: {customRender: 'action'}
+        /*text，record都是整列的值*/
       }
     ];
     /**
@@ -206,7 +260,7 @@ export default defineComponent({
     const modalVisible = ref(false);
     const modalLoading = ref(false);
 
-    const handleModalOk = () => {
+    const handleSave = () => {
       modalLoading.value = true;/*显示一个loading的效果*/
       /*     setTimeout(() => {
 
@@ -370,14 +424,22 @@ export default defineComponent({
       showConfirm,
       modalVisible,
       modalLoading,
-      handleModalOk,
-      doc
-
+      handleSave,
+      doc,
+      //富文本
+      editorRef,
+      valueHtml,
+      mode: 'default', // 或 'simple'
+      toolbarConfig,
+      editorConfig,
+      handleCreated
     }
   }
 });
 </script>
 
 <style scoped>
-
+/*#webebnkuang {
+  z-index: 0;
+}*/
 </style>
