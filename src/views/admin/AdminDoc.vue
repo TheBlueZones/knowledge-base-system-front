@@ -30,6 +30,7 @@
               :row-key="record => record.id"
               size="small"
               :default-expand-all-rows="true"
+              :defaultSelectedKey="defaultSelectedKey"
           >
             <template #name="{ text, record }">
               {{ record.sort }}{{ text }}
@@ -83,19 +84,26 @@
               >  <!--把组件的变量转换成自己的-->
               </a-tree-select>
             </a-form-item>
-<!--            <a-form-item>
-              <a-input v-model:value="doc.parent" placeholder="父文档"/>
-              <a-select
-                  ref="select"
-                  v-model:value="doc.parent"
-              >
-                <a-select-option value="0">无</a-select-option>
-                <a-select-option v-for="c in level1" :key="c.id" :value="c.id" :disabled="doc.id==c.id">{{ c.name }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>-->
+            <!--            <a-form-item>
+                          <a-input v-model:value="doc.parent" placeholder="父文档"/>
+                          <a-select
+                              ref="select"
+                              v-model:value="doc.parent"
+                          >
+                            <a-select-option value="0">无</a-select-option>
+                            <a-select-option v-for="c in level1" :key="c.id" :value="c.id" :disabled="doc.id==c.id">{{ c.name }}
+                            </a-select-option>
+                          </a-select>
+                        </a-form-item>-->
             <a-form-item>
               <a-input v-model:value="doc.sort" placeholder="顺序"/>
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" @click="handlePreviewContent()">
+                <EyeOutlined/>
+                内容预览
+              </a-button>
+
             </a-form-item>
             <a-form-item>
               <div style="border: 1px solid #ccc" id="webebnkuang">
@@ -119,6 +127,11 @@
       </a-row>
 
       <!--每一行要给一个key-->
+      <!--抽屉组件-->
+      <a-drawer width="900" placement="right" :closable="false" :visible="drawerVisible" @close="onDrawerClose">
+        <div class="wangeditor" :innerHTML="previewHtml"></div>
+      </a-drawer>
+
 
 
     </a-layout-content>
@@ -191,6 +204,9 @@ export default defineComponent({
     param.value = {};
     const docs = ref();
     const loading = ref(false);
+    // 因为树选择组件的属性状态，会随当前编辑的节点而变化，所以单独声明一个响应式变量
+    const treeSelectData = ref();
+    treeSelectData.value = [];
     const columns = [
       {
         title: '名称',
@@ -227,7 +243,7 @@ export default defineComponent({
       /*这是get的方式*/
       // 如果不清空现有数据，则编辑保存重新加载数据后，再点编辑，则列表显示的还是编辑前的数据
       level1.value = [];
-      axios.get("/doc/all").then((response) => {
+      axios.get("/doc/all/" + route.query.ebookId).then((response) => {
         loading.value = false;
         const data = response.data;
         // console.log('response: ' + JSON.stringify(response))
@@ -241,7 +257,6 @@ export default defineComponent({
           console.log('level1.value----------', level1.value);
           // console.log('data.content--------'+data.content);
           console.log("树形结构：", level1);/*不能用逗号*/
-
           // 父文档下拉框初始化，相当于点击新增
           treeSelectData.value = Tool.copy(level1.value) || [];
           // 为选择树添加一个"无"
@@ -259,14 +274,15 @@ export default defineComponent({
      **/
     const handleQueryContent = () => {
 
-      axios.get("/doc/findContent/"+doc.value.id).then((response) => {
+      axios.get("/doc/findContent/" + doc.value.id).then((response) => {
+        valueHtml.value = '';
         loading.value = false;
         const data = response.data;
         // console.log('response: ' + JSON.stringify(response))
         if (data.success) {
-          valueHtml.value =data.content;
+          valueHtml.value = data.content;
         } else {
-          message.error(data.message);
+          // message.error('内容读取失败了');
         }
       });
 
@@ -277,12 +293,12 @@ export default defineComponent({
      * 数组，[100, 101]对应：前端开发 / Vue
      *
      */
-        // 因为树选择组件的属性状态，会随当前编辑的节点而变化，所以单独声明一个响应式变量
-    const treeSelectData = ref();
-    treeSelectData.value = [];
+
 
     const doc = ref();
-    doc.value = {};/*初始赋值一个空对象*/
+    doc.value = {
+      ebookId:route.query.ebookId
+    };/*初始赋值一个空对象*/
     const modalVisible = ref(false);
     const modalLoading = ref(false);
 
@@ -298,10 +314,11 @@ export default defineComponent({
         const data = response.data;
         if (data.success) {
           /*这个是modalVisible哪个框*/
-          modalVisible.value = false;
+          // modalVisible.value = false;
           /*拿到之后就把loading去掉*/
           // modalLoading.value = false;
           //重新加载列表
+          message.success('保存成功');
           handleQuery();
         } else {
           message.error(data.message);
@@ -343,7 +360,6 @@ export default defineComponent({
      * 编辑
      * */
     const edit = (record: any) => {
-
       modalVisible.value = true;
       doc.value = Tool.copy(record);/*数据双向绑定，所以在这复制了一份*/
       handleQueryContent();
@@ -434,6 +450,18 @@ export default defineComponent({
         },
       });
     }
+
+    // ----------------富文本预览--------------
+    const drawerVisible = ref(false);
+    const previewHtml = ref();
+    const handlePreviewContent = () => {
+      const html = valueHtml;
+      previewHtml.value = html;
+      drawerVisible.value = true;
+    };
+    const onDrawerClose = () => {
+      drawerVisible.value = false;
+    };
     onMounted(() => {
       handleQuery();
     });
@@ -461,7 +489,9 @@ export default defineComponent({
       mode: 'default', // 或 'simple'
       toolbarConfig,
       editorConfig,
-      handleCreated
+      handleCreated,
+      handlePreviewContent,
+      onDrawerClose
     }
   }
 });
