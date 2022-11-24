@@ -29,7 +29,7 @@
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
       <div class="welcome" v-show="isShowWelcome">
-        <h1>欢迎来到yide的电子书库</h1>
+        <h1 >你好哇！欢迎来到欣然书库！</h1>
       </div>
       <a-list v-show="!isShowWelcome" item-layout="vertical" size="large" :grid="{ gutter: 16, column: 4 }"
               :data-source="ebooks">
@@ -50,7 +50,7 @@
             </template>
             <a-list-item-meta :description="item.description">
               <template #title>
-<!--                <a :href="item.href">{{ item.name }}</a>-->
+                <!--                <a :href="item.href">{{ item.name }}</a>-->
                 <router-link :to="'/doc?ebookId='+item.id">
                   {{ item.name }}
                 </router-link>
@@ -174,5 +174,12 @@ export default defineComponent({
   line-height: 50px;
   border-radius: 8%;
   margin: 5px 0;
+}
+
+h1 {
+  text-align: center;
+  font-size: 50px;
+  color: #1890ff;
+  margin-top: 150px;
 }
 </style>
