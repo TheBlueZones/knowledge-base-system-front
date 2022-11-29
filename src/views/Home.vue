@@ -29,7 +29,7 @@
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
       <div class="welcome" v-show="isShowWelcome">
-        <h1 >你好哇！欢迎来到欣然书库！</h1>
+        <h1>你好哇！欢迎来到欣然书库！</h1>
       </div>
       <a-list v-show="!isShowWelcome" item-layout="vertical" size="large" :grid="{ gutter: 16, column: 4 }"
               :data-source="ebooks">
@@ -43,9 +43,17 @@
         <template #renderItem="{ item }">
           <a-list-item key="item.name">
             <template #actions>
-          <span v-for="{ type, text } in actions" :key="type">
-            <component :is="type" style="margin-right: 8px"/>
-            {{ text }}
+          <span>
+            <component :is="'FileOutlined'" style="margin-right: 8px"/>
+            {{ item.docCount }}
+          </span>
+              <span>
+            <component :is="'UserOutlined'" style="margin-right: 8px"/>
+            {{ item.viewCount }}
+          </span>
+              <span>
+            <component :is="'LikeOutlined'" style="margin-right: 8px"/>
+            {{ item.voteCount }}
           </span>
             </template>
             <a-list-item-meta :description="item.description">
@@ -69,11 +77,8 @@
 <script lang="ts">
 import {
   UserOutlined,
-  LaptopOutlined,
-  NotificationOutlined,
-  StarOutlined,
   LikeOutlined,
-  MessageOutlined
+  FileOutlined
 } from '@ant-design/icons-vue';
 import {defineComponent, onMounted, ref} from 'vue';
 import axios from "axios";
@@ -84,11 +89,9 @@ export default defineComponent({
   name: "Home",
   components: {
     UserOutlined,
-    LaptopOutlined,
-    NotificationOutlined,
-    StarOutlined,
     LikeOutlined,
-    MessageOutlined,
+    FileOutlined
+
   },
   setup() {
     const ebooks = ref();
@@ -150,13 +153,13 @@ export default defineComponent({
     };
     onMounted(() => {
       handleQueryCategory();
-      // handleQueryEbook();
+      // handleQueryEbook(); ebooks.value[1].docCount
     })
     return {
       actions: [
-        {type: 'StarOutlined', text: '156'},
-        {type: 'LikeOutlined', text: '156'},
-        {type: 'MessageOutlined', text: '2'},
+        {type: 'FileOutlined', text: '下载'},
+        {type: 'UserOutlined', text: 'item.viewCount'},
+        {type: 'LikeOutlined', text: 'item.voteCount'},
       ],
       ebooks,
       level1,
