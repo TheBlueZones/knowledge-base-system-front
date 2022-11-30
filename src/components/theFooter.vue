@@ -1,6 +1,8 @@
  <template>
-  <a-layout-footer style="text-align: center">
-    <span v-show="user.id">你好哇：{{user.name}}</span>
+  <a-layout-footer style="text-align: center;font-weight:bold;font-size: 16px">
+    <span>
+        你好哇，<span v-show="user.id">{{user.name}}!  </span>欢迎来到欣然书库！
+    </span>
   </a-layout-footer>
 </template>
 

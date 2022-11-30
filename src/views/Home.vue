@@ -29,7 +29,7 @@
         :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }"
     >
       <div class="welcome" v-show="isShowWelcome">
-        <h1>你好哇！欢迎来到欣然书库！</h1>
+        <Welcome></Welcome>
       </div>
       <a-list v-show="!isShowWelcome" item-layout="vertical" size="large" :grid="{ gutter: 16, column: 4 }"
               :data-source="ebooks">
@@ -84,14 +84,16 @@ import {defineComponent, onMounted, ref} from 'vue';
 import axios from "axios";
 import {Tool} from "@/util/tool";
 import {message} from 'ant-design-vue';
+import Welcome from "@/components/Welcome.vue";
+
 
 export default defineComponent({
   name: "Home",
   components: {
     UserOutlined,
     LikeOutlined,
-    FileOutlined
-
+    FileOutlined,
+    Welcome
   },
   setup() {
     const ebooks = ref();
